@@ -1,5 +1,4 @@
 import { HttpStatus, responseMessage } from "./constants.js";
-import { imageMessage, podcastMessage } from "./message.js";
 
 /**
  * Error handling middleware to handle server errors.
@@ -28,26 +27,6 @@ export const errorHandler = (err, req, res, next) => {
   if (err.code === 'P2002') {
     serverErrorResponse.message='Name already exist';
     statusCode = HttpStatus.CONFLICT
-  }
-  if (err.code === 'LIMIT_FILE_SIZE') {
-    serverErrorResponse.message=imageMessage.SIZE_LIMIT_EXCEED;
-    statusCode = HttpStatus.PAYLOAD_TOO_LARGE
-  }
-  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-    serverErrorResponse.message=imageMessage.FILES_LIMIT_PER_REQUEST;
-    statusCode = HttpStatus.BAD_REQUEST
-  }
-  if (err.code === 'LIMIT_UNEXPECTED_FILE' && ['startImage','endImage','badgeUrl'].includes(err.field)) {
-    serverErrorResponse.message=`Select only 1 image for ${err.field} `;
-    statusCode = HttpStatus.BAD_REQUEST
-  }
-  if(err.message === 'not an image'){
-    serverErrorResponse.message=imageMessage.TYPE_ERROR;
-    statusCode = HttpStatus.BAD_REQUEST
-  }
-  if(err.message === 'not an audio/video file'){
-    serverErrorResponse.message=podcastMessage.PODCAST_URL_INVALID;
-    statusCode = HttpStatus.BAD_REQUEST
   }
   return res.status(statusCode).json(serverErrorResponse);
 };

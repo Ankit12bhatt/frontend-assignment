@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  role         Role      @default(employee)
+  password     String
+  department   String?
+  position     String?
+  employee_id  String?   @unique
+  phone        String?
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  attendance   Attendance[]
+  leaveRequests LeaveRequest[] @relation("LeaveRequestUser")
+  approvedLeaves LeaveRequest[] @relation("LeaveRequestApprover")
+}
+
+
+
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id     Int
+  date        DateTime
+  login_time  DateTime?
+  logout_time DateTime?
+  total_hours Decimal? @db.Decimal(4, 2)
+  status      AttendanceStatus @default(absent)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([user_id, date])
+}
+
+model LeaveType {
+  id          Int      @id @default(autoincrement())
+  name        String
+  type        LeaveTypeCategory @default(regular)
+  max_days    Int      @default(21)
+  color       String   @default("#3b82f6")
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  leaveRequests LeaveRequest[]
+}
+
+
+model LeaveRequest {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation("LeaveRequestUser", fields: [user_id], references: [id], onDelete: Cascade)
+  user_id       Int
+  leave_type    LeaveType @relation(fields: [leave_type_id], references: [id], onDelete: Cascade)
+  leave_type_id Int
+  start_date    DateTime
+  end_date      DateTime
+  total_days    Int
+  reason        String
+  comments      String?
+  status        LeaveStatus @default(pending)
+  admin_comments String?
+  approved_by   Int?
+  approved_at   DateTime?
+  approvedBy    User?     @relation("LeaveRequestApprover", fields: [approved_by], references: [id], onDelete: SetNull)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+}
+
+
+enum Role {
+  employee
+  admin
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  partial
+}
+
+enum LeaveTypeCategory {
+  regular
+  event
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+}
