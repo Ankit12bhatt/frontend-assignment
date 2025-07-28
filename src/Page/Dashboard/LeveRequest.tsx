@@ -1,7 +1,6 @@
-"use client"
-
 import * as React from "react"
-import { format, differenceInDays, parseISO } from "date-fns"
+import { useForm } from "react-hook-form"
+import { format, parseISO, differenceInDays, isBefore } from "date-fns"
 import { Plus, Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -21,45 +20,73 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import type { LeaveRequest, LeaveType } from "@/defination/leave"
 
-
 interface LeaveRequestFormProps {
   leaveTypes: LeaveType[]
   onSubmitRequest: (request: Omit<LeaveRequest, "id" | "userId" | "userName" | "appliedDate" | "status">) => void
 }
 
+type FormValues = {
+  leaveType: string
+  startDate: string
+  endDate: string
+  reason: string
+  comments?: string
+}
+
 export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveRequestFormProps) {
   const [isOpen, setIsOpen] = React.useState(false)
-  const [selectedLeaveType, setSelectedLeaveType] = React.useState<string>("")
-  const [startDate, setStartDate] = React.useState("")
-  const [endDate, setEndDate] = React.useState("")
-  const [reason, setReason] = React.useState("")
-  const [comments, setComments] = React.useState("")
 
-  const selectedType = leaveTypes.find((type) => type.id === selectedLeaveType)
-  const totalDays = startDate && endDate ? differenceInDays(parseISO(endDate), parseISO(startDate)) + 1 : 0
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: {
+      leaveType: "",
+      startDate: "",
+      endDate: "",
+      reason: "",
+      comments: "",
+    },
+  })
 
-  const handleSubmit = () => {
-    if (!selectedType || !startDate || !endDate || !reason) return
+  const watchLeaveType = watch("leaveType")
+  const watchStartDate = watch("startDate")
+  const watchEndDate = watch("endDate")
+
+  const selectedType = leaveTypes.find((type) => type.id === watchLeaveType)
+
+  const totalDays =
+    watchStartDate && watchEndDate
+      ? differenceInDays(parseISO(watchEndDate), parseISO(watchStartDate)) + 1
+      : 0
+
+  const validateEndDate = (endDate: string) => {
+    if (!watchStartDate) return "Start date is required first"
+    if (isBefore(parseISO(endDate), parseISO(watchStartDate))) {
+      return "End date cannot be before start date"
+    }
+    return true
+  }
+
+  const onSubmit = (data: FormValues) => {
+    if (!selectedType) return
 
     onSubmitRequest({
       leaveType: selectedType,
-      startDate,
-      endDate,
+      startDate: data.startDate,
+      endDate: data.endDate,
       totalDays,
-      reason,
-      comments,
+      reason: data.reason,
+      comments: data.comments || "",
     })
 
-    // Reset form
-    setSelectedLeaveType("")
-    setStartDate("")
-    setEndDate("")
-    setReason("")
-    setComments("")
+    reset()
     setIsOpen(false)
   }
-
-  const isFormValid = selectedLeaveType && startDate && endDate && reason && totalDays > 0
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -75,10 +102,11 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
           <DialogDescription>Fill in the details for your leave request</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Leave Type */}
           <div>
             <Label htmlFor="leave-type">Leave Type</Label>
-            <Select value={selectedLeaveType} onValueChange={setSelectedLeaveType}>
+            <Select value={watchLeaveType} onValueChange={(value) => setValue("leaveType", value, { shouldValidate: true })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
@@ -98,6 +126,7 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
                 ))}
               </SelectContent>
             </Select>
+            {errors.leaveType && <p className="text-sm text-red-600 mt-1">{errors.leaveType.message}</p>}
             {selectedType && (
               <p className="text-sm text-gray-600 mt-1">
                 Max days: {selectedType.maxDays} | {selectedType.description}
@@ -105,29 +134,32 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
             )}
           </div>
 
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="start-date">Start Date</Label>
+              <Label htmlFor="startDate">Start Date</Label>
               <Input
-                id="start-date"
                 type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
                 min={format(new Date(), "yyyy-MM-dd")}
+                {...register("startDate", { required: "Start date is required" })}
               />
+              {errors.startDate && <p className="text-sm text-red-600 mt-1">{errors.startDate.message}</p>}
             </div>
             <div>
-              <Label htmlFor="end-date">End Date</Label>
+              <Label htmlFor="endDate">End Date</Label>
               <Input
-                id="end-date"
                 type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || format(new Date(), "yyyy-MM-dd")}
+                min={watchStartDate || format(new Date(), "yyyy-MM-dd")}
+                {...register("endDate", {
+                  required: "End date is required",
+                  validate: validateEndDate,
+                })}
               />
+              {errors.endDate && <p className="text-sm text-red-600 mt-1">{errors.endDate.message}</p>}
             </div>
           </div>
 
+          {/* Total Days */}
           {totalDays > 0 && (
             <div className="p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
@@ -139,38 +171,43 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
             </div>
           )}
 
+          {/* Reason */}
           <div>
             <Label htmlFor="reason">Reason *</Label>
             <Textarea
-              id="reason"
-              placeholder="Please provide a reason for your leave request"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
               rows={3}
+              placeholder="Please provide a reason for your leave request"
+              {...register("reason", { required: "Reason is required" })}
             />
+            {errors.reason && <p className="text-sm text-red-600 mt-1">{errors.reason.message}</p>}
           </div>
 
+          {/* Comments */}
           <div>
             <Label htmlFor="comments">Additional Comments</Label>
             <Textarea
-              id="comments"
-              placeholder="Any additional information (optional)"
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
               rows={2}
+              placeholder="Any additional information (optional)"
+              {...register("comments")}
             />
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!isFormValid || (selectedType && totalDays > selectedType.maxDays)}>
-            <Send className="w-4 h-4 mr-2" />
-            Submit Request
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                totalDays <= 0 ||
+                (selectedType && totalDays > selectedType.maxDays)
+              }
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

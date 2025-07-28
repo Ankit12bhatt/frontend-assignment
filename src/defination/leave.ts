@@ -30,3 +30,14 @@ export interface User {
   role: "employee" | "admin"
   email: string
 }
+
+export interface AttendanceStats {
+  totalWorkingDays: number
+  presentDays: number
+  absentDays: number
+  partialDays: number
+  totalHours: number
+  averageHours: number
+  lateCheckIns: number
+  earlyCheckOuts: number
+}
