@@ -19,6 +19,7 @@ export const register = async (req, res) => {
     position,
     employee_id,
     phone,
+    is_active = true,
   } = req.body;
 
   if (!name || !email || !password) {
@@ -49,14 +50,19 @@ export const register = async (req, res) => {
       position,
       employee_id,
       phone,
+      is_active,
     },
   });
 
   return res
     .status(HttpStatus.CREATED)
-    .json(successResponse({ id: newUser.id, email: newUser.email }, "User registered successfully"));
+    .json(
+      successResponse(
+        { id: newUser.id, email: newUser.email },
+        "User registered successfully"
+      )
+    );
 };
-
 
 // LOGIN
 export const login = async (req, res) => {
@@ -98,8 +104,5 @@ export const login = async (req, res) => {
 
   return res
     .status(HttpStatus.OK)
-    .json(successResponse({ token, user: tokenPayload }, userMessage.LOGIN));
+    .json(successResponse({ token }, userMessage.LOGIN));
 };
-
-
-

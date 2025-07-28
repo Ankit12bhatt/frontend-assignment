@@ -4,8 +4,7 @@ export const successResponse = (data, message = "Success") => ({
   data,
 });
 
-export const errorResponse = (message = "Error", data = null) => ({
+export const errorResponse = (message = "Error") => ({
   status: false,
   message,
-  data,
 });
