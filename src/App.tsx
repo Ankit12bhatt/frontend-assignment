@@ -1,14 +1,12 @@
 
 import './App.css'
-import Dashboard from './Page/Dashboard'
-
+import Login from './Page/LoginPage'
 
 function App() {
 
-
   return (
     <>
-   <Dashboard />
+   <Login />
     </>
    
   )

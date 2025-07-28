@@ -1,99 +1,101 @@
+import AuthLayout from "@/components/layout/AuthLayout"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { logIn, setUser } from "@/store/reducer/userReducer"
-import { authCred } from "@/utils/Data"
+import  { loginSchema } from "@/schema/AuthSchme"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff, Lock, Mail } from "lucide-react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { useDispatch } from "react-redux"
 import { toast } from "sonner"
-import { v4 as uuidv4 } from "uuid"
+import type { z } from "zod"
 
-
+type LoginFormData = z.infer<typeof loginSchema>
 const Login = () => {
-  const { register, handleSubmit } = useForm()
-   const dispatch = useDispatch()
+  const { register, handleSubmit, formState:{errors}  } = useForm({
+    resolver: zodResolver(loginSchema),
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const onSubmit = (data: any) => {
-    console.log("Login data:", data)
-    const { userName, password } = authCred
-    const { email, password: inputPassword } = data
-
-    if (email === userName && inputPassword === password) {
-      const fakeToken = uuidv4()
-
-      dispatch(logIn({ token: fakeToken }))
-      dispatch(
-        setUser({
-          id: "1",
-          name: "Ankit",
-          email: userName,
-          role: authCred.role,
-        })
-      )
-
-      toast.success("Login successful")
-    } else {
-      toast.error("Invalid credentials")
+  const handleLogin = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true)
+      console.log("Login data:", data)
+     
+    } catch (error) {
+      
+      toast.error("something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
-      <Card className="w-full max-w-md md:min-w-[400px] shadow-lg rounded-2xl">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-semibold">Login to your account</CardTitle>
-          <CardDescription className="text-sm text-gray-500">
-            Enter your email and password to continue
-          </CardDescription>
-        </CardHeader>
+    <AuthLayout
+      title="Welcome Back"
+      description="Sign in to your account to continue"
+    >
+      <form
+        onSubmit={handleSubmit(handleLogin)}
+        className="space-y-6 lg:space-y-8"
+      >
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              {...register("email")}
+              className="pl-10"
+              required
+            />
+           
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register("email", { required: true })}
-              />
+          </div>
+           <div className="text-red-500 text-sm mt-1">
+              {errors.email && errors.email.message}
             </div>
+        </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Forgot password?
-                </a>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                {...register("password", { required: true })}
-              />
-            </div>
-          </CardContent>
-
-          <CardFooter>
-            <Button type="submit" className="w-full mt-4">
-              Login
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              {...register("password")}
+              className="pl-10 pr-10"
+            
+            />
+           
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0 !bg-transparent"
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
             </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
-  )
-}
+          </div>
+           <div className="text-red-500 text-sm mt-1">
+              {errors.password && errors.password.message}
+            </div>
+        </div>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full h-11 lg:h-12 xl:h-14 text-base lg:text-lg font-semibold  hover:bg-gray-600 text-white border-0 transition-all duration-200"
+        >
+          {isLoading ? "Signing in..." : "Sign In"}
+        </Button>
+      </form>
+    </AuthLayout>
+  );
+};
 
-export default Login
+export default Login;
