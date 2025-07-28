@@ -3,13 +3,14 @@ import { useState } from 'react'
 import './App.css'
 import EmployeeDashboard from './Page/Dashboard/EmployeeDashboard'
 import type { User } from './defination/leave'
+import AdminDashboard from './Page/Dashboard/AdminDashboard'
 
 
 function App() {
     const [currentUser] = useState<User>({
     id: "admin1",
     name: "Admin User",
-    role: "employee", // Change to "employee" to see employee dashboard
+    role: "admin", // Change to "employee" to see employee dashboard
     email: "admin@company.com",
     department: "Administration",
     position: "System Administrator",
@@ -21,7 +22,7 @@ function App() {
 
   return (
     <>
-   <EmployeeDashboard currentUser={currentUser} />
+   <AdminDashboard currentUser={currentUser} />
     </>
    
   )

@@ -236,6 +236,7 @@ export default function EmployeeDashboard({
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-8xl mx-auto space-y-6 m-2">
         {/* Header */}
+        {currentUser && currentUser.role !== "admin" && ( 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -258,6 +259,7 @@ export default function EmployeeDashboard({
             </div>
           </div>
         </div>
+        )}
 
         <Tabs defaultValue="attendance" className="w-full">
           <TabsList className="grid w-full  grid-cols-2 mb-12 md:grid-cols-3 ">

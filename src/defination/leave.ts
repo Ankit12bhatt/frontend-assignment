@@ -27,8 +27,15 @@ export interface LeaveRequest {
 export interface User {
   id: string
   name: string
-  role: "employee" | "admin"
   email: string
+  role: "admin" | "employee"
+  department: string
+  position: string
+  joinDate: string
+  isActive: boolean
+  avatar?: string
+  phone?: string
+  employeeId: string
 }
 
 export interface AttendanceStats {
