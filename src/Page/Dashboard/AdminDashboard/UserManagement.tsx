@@ -1,15 +1,20 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { format } from "date-fns"
-import { UserPlus, Edit, Trash2, Search, MoreHorizontal } from "lucide-react"
+import * as React from "react";
+import { UserPlus, Edit, Trash2, Search, MoreHorizontal } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -18,108 +23,159 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import type { User } from "@/defination/leave"
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import type { User } from "@/defination/leave";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
+import { useRegisterUserMutation } from "@/store/api/authSlice";
+import { toast } from "sonner";
+import {
+  useDeleteUserMutation,
+  useUpdateUserMutation,
+} from "@/store/api/userSlice";
 
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["admin", "employee"]),
+  department: z.string().optional(),
+  position: z.string().optional(),
+  employee_id: z.string().min(1, "Employee ID is required"),
+  phone: z.string().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export type FormValuesUser = z.infer<typeof schema>;
 
 interface UserManagementProps {
-  users: User[]
-  onAddUser: (user: Omit<User, "id">) => void
-  onUpdateUser: (id: string, user: Partial<User>) => void
-  onDeleteUser: (id: string) => void
+  users: User[];
 }
 
- const UserManagement = ({ users, onAddUser, onUpdateUser, onDeleteUser }: UserManagementProps) => {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [editingUser, setEditingUser] = React.useState<User | null>(null)
-  const [searchTerm, setSearchTerm] = React.useState("")
-  const [departmentFilter, setDepartmentFilter] = React.useState("all")
-  const [roleFilter, setRoleFilter] = React.useState("all")
+const UserManagement = ({ users }: UserManagementProps) => {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [departmentFilter, setDepartmentFilter] = React.useState("all");
+  const [roleFilter, setRoleFilter] = React.useState("all");
+  const [registerUser] = useRegisterUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+  const [updateUser] = useUpdateUserMutation();
 
-  // Form state
-  const [formData, setFormData] = React.useState({
-    name: "",
-    email: "",
-    role: "employee" as "admin" | "employee",
-    department: "",
-    position: "",
-    employeeId: "",
-    phone: "",
-    isActive: true,
-  })
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<FormValuesUser>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "employee",
+      department: "",
+      position: "",
+      employee_id: "",
+      phone: "",
+      is_active: true,
+    },
+  });
 
-  const departments = Array.from(new Set(users.map((u) => u.department)))
+  const departments = Array.from(new Set(users.map((u) => u.department)));
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesDepartment = departmentFilter === "all" || user.department === departmentFilter
-    const matchesRole = roleFilter === "all" || user.role === roleFilter
+      user.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment =
+      departmentFilter === "all" || user.department === departmentFilter;
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
-    return matchesSearch && matchesDepartment && matchesRole
-  })
+    return matchesSearch && matchesDepartment && matchesRole;
+  });
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      email: "",
-      role: "employee",
-      department: "",
-      position: "",
-      employeeId: "",
-      phone: "",
-      isActive: true,
-    })
-    setEditingUser(null)
-    setIsDialogOpen(false)
-  }
-
-  const handleSubmit = () => {
-    if (!formData.name || !formData.email || !formData.employeeId) return
-
-    const userData = {
-      ...formData,
-      joinDate: editingUser?.joinDate || format(new Date(), "yyyy-MM-dd"),
+  const onSubmit = async (data: FormValuesUser) => {
+    try {
+      if (editingUser) {
+        const response = await updateUser({
+          id: Number(editingUser.id),
+          data: {
+            ...data,
+            role: data.role === "employee" ? "employee" : data.role,
+            is_Active: data.is_active ?? false,
+            department: data.department ?? "",
+            position: data.position ?? "",
+            phone: data.phone ?? "",
+          },
+        }).unwrap();
+        if (!response.status) {
+          throw new Error(response.message || "Failed to update user");
+        }
+        toast.success(response.message || "User updated successfully");
+      } else {
+        const response = await registerUser(data).unwrap();
+        if (!response.status) {
+          throw new Error(response.message || "Failed to create user");
+        }
+        toast.success(response.message || "User created successfully");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred");
+      return;
+    } finally {
+      setIsDialogOpen(false);
+      reset();
+      setEditingUser(null);
     }
-
-    if (editingUser) {
-      onUpdateUser(editingUser.id, userData)
-    } else {
-      onAddUser(userData)
-    }
-
-    resetForm()
-  }
+  };
 
   const handleEdit = (user: User) => {
-    setEditingUser(user)
-    setFormData({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      department: user.department,
-      position: user.position,
-      employeeId: user.employeeId,
-      phone: user.phone || "",
-      isActive: user.isActive,
-    })
-    setIsDialogOpen(true)
-  }
+    setEditingUser(user);
+    setValue("name", user.name);
+    setValue("email", user.email);
+    setValue("role", user.role);
+    setValue("department", user.department);
+    setValue("position", user.position);
+    setValue("employee_id", user.employeeId);
+    setValue("phone", user.phone || "");
+    setValue("is_active", user.is_active);
+    setValue("password", "");
+    setIsDialogOpen(true);
+  };
 
-  const handleDelete = (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      onDeleteUser(userId)
+  const handleDelete = async (userId: string) => {
+    try {
+      if (confirm("Are you sure you want to delete this user?")) {
+        const response = await deleteUser(Number(userId)).unwrap();
+        if (!response.status) {
+          throw new Error(response.message || "Failed to delete user");
+        }
+        toast.success("User deleted successfully");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while deleting user");
+      return;
     }
-  }
-
-  const toggleUserStatus = (userId: string, isActive: boolean) => {
-    onUpdateUser(userId, { isActive })
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -127,117 +183,121 @@ interface UserManagementProps {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>User Management</CardTitle>
-            <CardDescription>Add, edit, and manage user accounts</CardDescription>
+            <CardDescription>
+              Add, edit, and manage user accounts
+            </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => reset()}>
                 <UserPlus className="w-4 h-4 mr-2" />
                 Add User
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
-                <DialogDescription>
-                  {editingUser ? "Update user information" : "Create a new user account"}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingUser ? "Edit User" : "Add User"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingUser
+                      ? "Update user information"
+                      : "Create a new user account"}
+                  </DialogDescription>
+                </DialogHeader>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="John Doe"
-                    />
+                    <Label>Name *</Label>
+                    <Input {...register("name")} />
+                    {errors.name && (
+                      <p className="text-sm text-red-500">
+                        {errors.name.message}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="employeeId">Employee ID *</Label>
-                    <Input
-                      id="employeeId"
-                      value={formData.employeeId}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, employeeId: e.target.value }))}
-                      placeholder="EMP001"
-                    />
+                    <Label>Employee ID *</Label>
+                    <Input {...register("employee_id")} />
+                    {errors.employee_id && (
+                      <p className="text-sm text-red-500">
+                        {errors.employee_id.message}
+                      </p>
+                    )}
                   </div>
                 </div>
-
                 <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="john.doe@company.com"
-                  />
+                  <Label>Email *</Label>
+                  <Input {...register("email")} type="email" />
+                  {errors.email && (
+                    <p className="text-sm text-red-500">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
-
                 <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+1234567890"
-                  />
+                  <Label>Password *</Label>
+                  <Input {...register("password")} type="password" />
+                  {errors.password && (
+                    <p className="text-sm text-red-500">
+                      {errors.password.message}
+                    </p>
+                  )}
                 </div>
-
+                <div>
+                  <Label>Phone</Label>
+                  <Input {...register("phone")} />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="role">Role</Label>
+                    <Label>Role</Label>
                     <Select
-                      value={formData.role}
-                      onValueChange={(value: "admin" | "employee") => setFormData((prev) => ({ ...prev, role: value }))}
+                      value={watch("role")}
+                      onValueChange={(val: "admin" | "employee") =>
+                        setValue("role", val)
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="employee">Employee</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      value={formData.department}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, department: e.target.value }))}
-                      placeholder="Engineering"
-                    />
+                    <Label>Department</Label>
+                    <Input {...register("department")} />
                   </div>
                 </div>
-
                 <div>
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={formData.position}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-                    placeholder="Senior Developer"
-                  />
+                  <Label>Position</Label>
+                  <Input {...register("position")} />
                 </div>
-
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="isActive"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
+                    checked={watch("is_active")}
+                    onCheckedChange={(checked) =>
+                      setValue("is_active", checked)
+                    }
                   />
-                  <Label htmlFor="isActive">Active User</Label>
+                  <Label>Active User</Label>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit}>{editingUser ? "Update" : "Create"} User</Button>
-              </DialogFooter>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editingUser ? "Update" : "Create"} User
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </CardHeader>
@@ -253,7 +313,10 @@ interface UserManagementProps {
                 className="pl-10"
               />
             </div>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <Select
+              value={departmentFilter}
+              onValueChange={setDepartmentFilter}
+            >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
@@ -281,7 +344,10 @@ interface UserManagementProps {
           {/* Users Table */}
           <div className="space-y-4">
             {filteredUsers.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+              >
                 <div className="flex items-center gap-4">
                   <Avatar>
                     <AvatarImage src={user.avatar || "/placeholder.svg"} />
@@ -295,27 +361,31 @@ interface UserManagementProps {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{user.name}</p>
-                      {!user.isActive && (
+                      {!user.is_active && (
                         <Badge variant="secondary" className="text-xs">
                           Inactive
                         </Badge>
                       )}
                       {user.role === "admin" && (
-                        <Badge className="text-xs bg-purple-100 text-purple-800 hover:bg-purple-100">Admin</Badge>
+                        <Badge className="text-xs bg-purple-100 text-purple-800 hover:bg-purple-100">
+                          Admin
+                        </Badge>
                       )}
                     </div>
                     <p className="text-sm text-gray-600">{user.email}</p>
                     <p className="text-xs text-gray-500">
-                      {user.position} • {user.department} • ID: {user.employeeId}
+                      {user.position} • {user.department} • ID:{" "}
+                      {user.employeeId}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={user.isActive}
-                    onCheckedChange={(checked) => toggleUserStatus(user.id, checked)}
-                   
+                    checked={user.is_active}
+                    onCheckedChange={(checked) =>
+                      setValue("is_active", checked)
+                    }
                   />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -328,7 +398,10 @@ interface UserManagementProps {
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(user.id)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600"
+                      >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </DropdownMenuItem>
@@ -340,11 +413,13 @@ interface UserManagementProps {
           </div>
 
           {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">No users found matching your criteria</div>
+            <div className="text-center py-8 text-gray-500">
+              No users found matching your criteria
+            </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 export default UserManagement;

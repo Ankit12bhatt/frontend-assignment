@@ -43,7 +43,7 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
       department: "Engineering",
       position: "Senior Developer",
       joinDate: "2023-01-15",
-      isActive: true,
+      is_active: true,
       employeeId: "EMP001",
       phone: "+1234567890",
     },
@@ -55,7 +55,7 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
       department: "Marketing",
       position: "Marketing Manager",
       joinDate: "2023-03-20",
-      isActive: true,
+      is_active: true,
       employeeId: "EMP002",
       phone: "+1234567891",
     },
@@ -67,7 +67,7 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
       department: "HR",
       position: "HR Specialist",
       joinDate: "2022-11-10",
-      isActive: false,
+      is_active: false,
       employeeId: "EMP003",
       phone: "+1234567892",
     },
@@ -155,19 +155,11 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
   const pendingRequests = leaveRequests.filter(
     (req) => req.status === "pending"
   );
-  const activeUsers = users.filter((user) => user.isActive);
+  const activeUsers = users.filter((user) => user.is_active);
   const totalLeaveRequests = leaveRequests.length;
   const approvedRequests = leaveRequests.filter(
     (req) => req.status === "approved"
   ).length;
-
-  const handleAddUser = (userData: Omit<User, "id">) => {
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString(),
-    };
-    setUsers((prev) => [...prev, newUser]);
-  };
 
   const handleUpdateUser = (id: string, userData: Partial<User>) => {
     setUsers((prev) =>
@@ -444,12 +436,7 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagement
-              users={users}
-              onAddUser={handleAddUser}
-              onUpdateUser={handleUpdateUser}
-              onDeleteUser={handleDeleteUser}
-            />
+            <UserManagement users={users} />
           </TabsContent>
 
           <TabsContent value="leaves">
@@ -466,11 +453,11 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
 
           <TabsContent value="attendance">
             <AttendanceOverview users={users} />
-          </TabsContent> 
+          </TabsContent>
 
           <TabsContent value="records">
             <EmployeeDashboard currentUser={currentUser} />
-           </TabsContent>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

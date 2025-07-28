@@ -1,35 +1,47 @@
-import AuthLayout from "@/components/layout/AuthLayout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import  { loginSchema } from "@/schema/AuthSchme"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff, Lock, Mail } from "lucide-react"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import type { z } from "zod"
+import AuthLayout from "@/components/layout/AuthLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { loginSchema } from "@/schema/AuthSchme";
+import { useLoginMutation } from "@/store/api/authSlice";
+import { logIn } from "@/store/reducer/userReducer";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import { toast } from "sonner";
+import type { z } from "zod";
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<typeof loginSchema>;
 const Login = () => {
-  const { register, handleSubmit, formState:{errors}  } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(loginSchema),
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const [login] = useLoginMutation();
 
   const handleLogin = async (data: LoginFormData) => {
     try {
-      setIsLoading(true)
-      console.log("Login data:", data)
-     
-    } catch (error) {
-      
-      toast.error("something went wrong");
+      setIsLoading(true);
+      const response = await login(data).unwrap();
+      if (!response.status) {
+        throw new Error(response.message);
+      }
+      toast.success(response.message || "Login successful");
+      dispatch(logIn(response.data));
+    } catch (error: any) {
+      toast.error(error.data.message || "something went wrong");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <AuthLayout
@@ -52,12 +64,10 @@ const Login = () => {
               className="pl-10"
               required
             />
-           
-
           </div>
-           <div className="text-red-500 text-sm mt-1">
-              {errors.email && errors.email.message}
-            </div>
+          <div className="text-red-500 text-sm mt-1">
+            {errors.email && errors.email.message}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -70,9 +80,8 @@ const Login = () => {
               placeholder="Enter your password"
               {...register("password")}
               className="pl-10 pr-10"
-            
             />
-           
+
             <Button
               variant="ghost"
               type="button"
@@ -82,9 +91,9 @@ const Login = () => {
               {showPassword ? <EyeOff /> : <Eye />}
             </Button>
           </div>
-           <div className="text-red-500 text-sm mt-1">
-              {errors.password && errors.password.message}
-            </div>
+          <div className="text-red-500 text-sm mt-1">
+            {errors.password && errors.password.message}
+          </div>
         </div>
         <Button
           type="submit"
