@@ -160,14 +160,6 @@ const AdminDashboard = () => {
     );
   };
 
-  const handleAddLeaveType = (leaveTypeData: Omit<LeaveType, "id">) => {
-    const newLeaveType: LeaveType = {
-      ...leaveTypeData,
-      id: Date.now().toString(),
-    };
-    setLeaveTypes((prev) => [...prev, newLeaveType]);
-  };
-
   const handleUpdateLeaveType = (id: string, updates: Partial<LeaveType>) => {
     setLeaveTypes((prev) =>
       prev.map((type) => (type.id === id ? { ...type, ...updates } : type))
@@ -428,7 +420,6 @@ const AdminDashboard = () => {
               leaveTypes={leaveTypes}
               onApproveRequest={handleApproveRequest}
               onRejectRequest={handleRejectRequest}
-              onAddLeaveType={handleAddLeaveType}
               onUpdateLeaveType={handleUpdateLeaveType}
               onDeleteLeaveType={handleDeleteLeaveType}
             />

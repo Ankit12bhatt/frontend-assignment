@@ -97,7 +97,7 @@ interface AttendanceRecord {
     },
   ]);
 
-  const [attendanceHistory, setAttendanceHistory] = useState<
+  const [attendanceHistory] = useState<
     AttendanceRecord[]
   >([
     {
