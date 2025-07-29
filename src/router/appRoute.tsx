@@ -74,35 +74,29 @@ const AppRoute = () => {
   }, [token, user, getUser, isLoading, navigate]);
 
   // Redirect based on auth + role
-  useEffect(() => {
-    if (!authChecked) return;
+useEffect(() => {
+  if (!authChecked) return;
 
-    const path = location.pathname;
+  const path = location.pathname;
 
-    // Not authenticated
-    if (!isAuthenticated) {
-      if (!path.startsWith("/auth")) {
-        navigate("/auth/login");
-      }
-      return;
+  if (!isAuthenticated) {
+    if (!path.startsWith("/auth")) {
+      setTimeout(() => navigate("/auth/login"), 0);
     }
+    return;
+  }
 
-    // Authenticated and trying to access wrong section
-    if (userRole === UserRole.ADMIN && path.startsWith("/admin")) {
-      navigate("/admin/dashboard");
-    } else if (userRole === UserRole.EMPLOYEE && path.startsWith("/employee")) {
-      navigate("/employee/dashboard");
+  if (path === "/" || path === "*" || path === "") {
+    if (userRole === UserRole.ADMIN) {
+      setTimeout(() => navigate("/admin/dashboard"), 0);
+    } else if (userRole === UserRole.EMPLOYEE) {
+      setTimeout(() => navigate("/employee/dashboard"), 0);
+    } else {
+      setTimeout(() => navigate("/auth/login"), 0);
     }
+  }
+}, [authChecked, isAuthenticated, location.pathname, userRole, navigate]);
 
-    // Root or wildcard
-    if (path === "/" || path === "*") {
-      if (userRole === UserRole.ADMIN) {
-        navigate("/admin/dashboard");
-      } else if (userRole === UserRole.EMPLOYEE) {
-        navigate("/employee/dashboard");
-      }
-    }
-  }, [authChecked, isAuthenticated, location.pathname, userRole, navigate]);
 
   // Routes to load
   const routes = useMemo(() => {
@@ -119,7 +113,7 @@ const AppRoute = () => {
 
   if (!authChecked) return <div>Loading...</div>;
 
-  return routing ?? <Navigate to="/" />;
+  return routing ?? <Navigate to="/auth/login" />;
 };
 
 export default AppRoute;
