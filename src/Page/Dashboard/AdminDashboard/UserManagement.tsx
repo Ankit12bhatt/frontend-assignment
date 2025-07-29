@@ -65,9 +65,10 @@ export type FormValuesUser = z.infer<typeof schema>;
 
 interface UserManagementProps {
   users: User[];
+  fetch: () => void; 
 }
 
-const UserManagement = ({ users }: UserManagementProps) => {
+const UserManagement = ({ users, fetch }: UserManagementProps) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -121,7 +122,7 @@ const UserManagement = ({ users }: UserManagementProps) => {
           data: {
             ...data,
             role: data.role === "employee" ? "employee" : data.role,
-            is_Active: data.is_active ?? false,
+            is_active: data.is_active ?? false,
             department: data.department ?? "",
             position: data.position ?? "",
             phone: data.phone ?? "",
@@ -144,6 +145,7 @@ const UserManagement = ({ users }: UserManagementProps) => {
     } finally {
       setIsDialogOpen(false);
       reset();
+      fetch();
       setEditingUser(null);
     }
   };
@@ -170,6 +172,7 @@ const UserManagement = ({ users }: UserManagementProps) => {
           throw new Error(response.message || "Failed to delete user");
         }
         toast.success("User deleted successfully");
+        fetch();
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred while deleting user");
@@ -322,11 +325,13 @@ const UserManagement = ({ users }: UserManagementProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
-                ))}
+                {departments
+                  .filter((dept) => dept && dept.trim() !== "") // remove empty/null/undefined
+                  .map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <Select value={roleFilter} onValueChange={setRoleFilter}>

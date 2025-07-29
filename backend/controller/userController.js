@@ -132,3 +132,34 @@ export const deleteUser = async (req, res) => {
     .status(HttpStatus.OK)
     .json(successResponse(null, userMessage.USER_DELETED));
 };
+
+// @desc    Get current user (Authenticated user)
+// @route   GET /api/v1/user/me
+export const getCurrentUser = async (req, res) => {
+  const userId = req.user.id;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      is_active: true,
+      employee_id: true,
+      department: true,
+      position: true,
+      created_at: true,
+    },
+  });
+
+  if (!user) {
+    return res
+      .status(HttpStatus.NOT_FOUND)
+      .json(errorResponse(null, userMessage.USER_NOT_FOUND));
+  }
+
+  return res
+    .status(HttpStatus.OK)
+    .json(successResponse(user, userMessage.CURRENT_USER_FETCHED));
+}

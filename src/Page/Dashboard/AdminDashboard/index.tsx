@@ -28,50 +28,12 @@ import type { User, LeaveRequest, LeaveType } from "@/defination/leave";
 import LeaveManagement from "./LeaveManagement";
 import UserManagement from "./UserManagement";
 import EmployeeDashboard from "../EmployeeDashboard";
+import { useGetAllUsersQuery } from "@/store/api/userSlice";
 
-interface AdminDashboardProps {
-  currentUser: User;
-}
+const AdminDashboard = () => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const { data: users = [], refetch } = useGetAllUsersQuery();
 
-const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
-  const [users, setUsers] = React.useState<User[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john.doe@company.com",
-      role: "employee",
-      department: "Engineering",
-      position: "Senior Developer",
-      joinDate: "2023-01-15",
-      is_active: true,
-      employeeId: "EMP001",
-      phone: "+1234567890",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@company.com",
-      role: "employee",
-      department: "Marketing",
-      position: "Marketing Manager",
-      joinDate: "2023-03-20",
-      is_active: true,
-      employeeId: "EMP002",
-      phone: "+1234567891",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike.johnson@company.com",
-      role: "employee",
-      department: "HR",
-      position: "HR Specialist",
-      joinDate: "2022-11-10",
-      is_active: false,
-      employeeId: "EMP003",
-      phone: "+1234567892",
-    },
-  ]);
 
   const [leaveTypes, setLeaveTypes] = React.useState<LeaveType[]>([
     {
@@ -155,21 +117,16 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
   const pendingRequests = leaveRequests.filter(
     (req) => req.status === "pending"
   );
-  const activeUsers = users.filter((user) => user.is_active);
+  const userArray: User[] = Array.isArray((users as any).data)
+    ? (users as any).data
+    : Array.isArray(users)
+    ? (users as User[])
+    : [];
+  const activeUsers = userArray.filter((user: User) => user.is_active);
   const totalLeaveRequests = leaveRequests.length;
   const approvedRequests = leaveRequests.filter(
     (req) => req.status === "approved"
   ).length;
-
-  const handleUpdateUser = (id: string, userData: Partial<User>) => {
-    setUsers((prev) =>
-      prev.map((user) => (user.id === id ? { ...user, ...userData } : user))
-    );
-  };
-
-  const handleDeleteUser = (id: string) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id));
-  };
 
   const handleApproveRequest = (id: string, adminComments?: string) => {
     setLeaveRequests((prev) =>
@@ -240,7 +197,7 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
               <AvatarFallback>
                 {currentUser.name
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: any) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>
@@ -255,7 +212,13 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total Users"
-            value={users.length}
+            value={
+              Array.isArray((users as any).data)
+                ? (users as any).data.length
+                : Array.isArray(users)
+                ? users.length
+                : 0
+            }
             icon={Users}
             iconColor="text-blue-600"
             subtitle={`${activeUsers.length} active users`}
@@ -366,33 +329,35 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {Array.from(new Set(users.map((u) => u.department))).map(
-                      (dept) => {
-                        const count = users.filter(
-                          (u) => u.department === dept
-                        ).length;
-                        const percentage = (count / users.length) * 100;
-                        return (
-                          <div
-                            key={dept}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="text-sm font-medium">{dept}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-blue-600 h-2 rounded-full"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="text-sm text-gray-600">
-                                {count}
-                              </span>
+                    {Array.from(
+                      new Set(userArray.map((u: User) => u.department))
+                    ).map((dept) => {
+                      const count = userArray.filter(
+                        (u: User) => u.department === dept
+                      ).length;
+                      const percentage = userArray.length
+                        ? (count / userArray.length) * 100
+                        : 0;
+                      return (
+                        <div
+                          key={dept}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-sm font-medium">{dept}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-blue-600 h-2 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
                             </div>
+                            <span className="text-sm text-gray-600">
+                              {count}
+                            </span>
                           </div>
-                        );
-                      }
-                    )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -436,7 +401,19 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagement users={users} />
+            <UserManagement
+              users={
+                users &&
+                typeof users === "object" &&
+                "data" in users &&
+                Array.isArray((users as any).data)
+                  ? ((users as any).data as User[])
+                  : Array.isArray(users)
+                  ? (users as User[])
+                  : []
+              }
+              fetch = {refetch}
+            />
           </TabsContent>
 
           <TabsContent value="leaves">
@@ -452,11 +429,22 @@ const AdminDashboard = ({ currentUser }: AdminDashboardProps) => {
           </TabsContent>
 
           <TabsContent value="attendance">
-            <AttendanceOverview users={users} />
+            <AttendanceOverview
+              users={
+                users &&
+                typeof users === "object" &&
+                "data" in users &&
+                Array.isArray((users as any).data)
+                  ? ((users as any).data as User[])
+                  : Array.isArray(users)
+                  ? (users as User[])
+                  : []
+              }
+            />
           </TabsContent>
 
           <TabsContent value="records">
-            <EmployeeDashboard currentUser={currentUser} />
+            <EmployeeDashboard  />
           </TabsContent>
         </Tabs>
       </div>

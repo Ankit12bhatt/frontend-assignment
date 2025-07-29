@@ -2,6 +2,7 @@ import { apiSlice } from "./apiSlice";
 import type { FormValuesUser } from "@/Page/Dashboard/AdminDashboard/UserManagement";
 import type {
   GetAllUsersResponse,
+  GetCurrentUserResponse,
   LoginRequest,
   LoginResponse,
   RegisterUserResponse,
@@ -16,9 +17,9 @@ export const authApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
-    getUser: builder.query<GetAllUsersResponse, void>({
+    getCurrentUser: builder.query<GetCurrentUserResponse, void>({
       query: () => ({
-        url: "/api/v1/user",
+        url: "/api/v1/user/me",
         method: "GET",
       }),
     }),
@@ -33,7 +34,7 @@ export const authApiSlice = apiSlice.injectEndpoints({
 });
 export const {
   useLoginMutation,
-  useGetUserQuery,
-  useLazyGetUserQuery,
+  useGetCurrentUserQuery,
+  useLazyGetCurrentUserQuery,
   useRegisterUserMutation,
 } = authApiSlice;

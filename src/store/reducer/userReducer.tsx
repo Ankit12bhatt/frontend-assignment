@@ -3,7 +3,6 @@
  * @remarks This slice handles authentication-related state such as authentication status and user information.
  */
 
-
 import { type PayloadAction, createSlice } from "@reduxjs/toolkit";
 type AuthState = {
   loading: boolean;
@@ -11,9 +10,14 @@ type AuthState = {
 };
 
 type User = {
-  id: string;
+  id: number;
   name: string;
   email: string;
+  role: string;
+  is_active: boolean;
+  employee_id: string;
+  department: string;
+  position: string;
   // Add other fields as needed (e.g., role, avatar, etc.)
 };
 
@@ -50,25 +54,20 @@ const authSlice = createSlice({
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
-    
+
     setLoadingUser: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
     setUser: (state, action: PayloadAction<User>) => {
-      localStorage.removeItem('user')
+      localStorage.removeItem("user");
       state.user = action.payload;
-      localStorage.setItem('user', JSON.stringify(action.payload));
+      localStorage.setItem("user", JSON.stringify(action.payload));
     },
   },
 });
 
 // Export actions
-export const {
-  logIn,
-  logOut,
-  setUser,
-  setLoadingUser,
-} = authSlice.actions;
+export const { logIn, logOut, setUser, setLoadingUser } = authSlice.actions;
 
 /**
  * Selector function to get the authentication state.

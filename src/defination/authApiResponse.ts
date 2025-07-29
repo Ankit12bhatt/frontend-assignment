@@ -37,3 +37,16 @@ export interface GetAllUsersResponse {
   message: string;
   data: UserData[];
 }
+
+
+export interface GetCurrentUserResponse {
+  status: boolean;
+  message: string;
+  data: UserData;
+}
+export interface ApiError {
+  data?: {
+    message?: string;
+  };
+  message?: string;
+}

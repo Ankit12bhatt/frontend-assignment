@@ -7,9 +7,11 @@ import {
   getUser,
   updateUser,
   deleteUser,
+  getCurrentUser
 } from "../controller/userController.js";
 const router = Router();
 
+router.get("/me", authenticate, asyncErrorHandler(getCurrentUser));
 router.post("/", authenticate, isAdmin, asyncErrorHandler(addUser));
 router.get("/", authenticate, isAdmin, asyncErrorHandler(getAllUsers));
 router.get("/:id", authenticate, asyncErrorHandler(getUser));

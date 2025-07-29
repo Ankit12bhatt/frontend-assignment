@@ -1,9 +1,15 @@
 // types/user.ts
 
 export interface User {
-  id: number;
+ id: number;
+  name: string;
   email: string;
-  role: "admin" | "user";
+  role: string;
+  is_active: boolean;
+  employee_id: string;
+  department: string;
+  position: string;
+  created_at: string;
 }
 
 export interface GetAllUsersResponse {
@@ -26,7 +32,7 @@ export interface UpdateUserRequest {
   department: string;
   position: string;
   phone: string;
-  is_Active: boolean;
+  is_active: boolean;
 }
 
 export interface UpdateUserResponse {

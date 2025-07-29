@@ -32,13 +32,8 @@ interface AttendanceRecord {
   totalHours?: string;
 }
 
-interface EmployeeDashboardProps {
-  currentUser: any;
-}
-
-export default function EmployeeDashboard({
-  currentUser,
-}: EmployeeDashboardProps) {
+ const EmployeeDashboard =() => {
+   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
@@ -322,3 +317,5 @@ export default function EmployeeDashboard({
     </div>
   );
 }
+
+export default EmployeeDashboard;

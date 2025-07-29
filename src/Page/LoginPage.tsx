@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema } from "@/schema/AuthSchme";
-import { useLoginMutation } from "@/store/api/authSlice";
-import { logIn } from "@/store/reducer/userReducer";
+import { useLazyGetCurrentUserQuery, useLoginMutation } from "@/store/api/authSlice";
+import { logIn, setUser } from "@/store/reducer/userReducer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useState } from "react";
@@ -26,6 +26,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const [login] = useLoginMutation();
+  const [currentUser ] = useLazyGetCurrentUserQuery();
 
   const handleLogin = async (data: LoginFormData) => {
     try {
@@ -36,6 +37,11 @@ const Login = () => {
       }
       toast.success(response.message || "Login successful");
       dispatch(logIn(response.data));
+
+    const userResponse = await currentUser().unwrap();
+    if (!userResponse) throw new Error("Failed to fetch user");
+    console.log("User data:", userResponse);
+    dispatch(setUser(userResponse.data));
     } catch (error: any) {
       toast.error(error.data.message || "something went wrong");
     } finally {
