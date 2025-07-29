@@ -178,6 +178,12 @@ const AdminDashboard = () => {
     setLeaveTypes((prev) => prev.filter((type) => type.id !== id));
   };
 
+  const handleLogut = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    window.location.href = "/auth/login";
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-8xl mx-auto space-y-6 m-2">
@@ -192,7 +198,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Avatar>
+            <Avatar onClick={()=> handleLogut()}>
               <AvatarImage src="/placeholder.svg?height=40&width=40" />
               <AvatarFallback>
                 {currentUser.name

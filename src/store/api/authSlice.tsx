@@ -1,7 +1,6 @@
 import { apiSlice } from "./apiSlice";
 import type { FormValuesUser } from "@/Page/Dashboard/AdminDashboard/UserManagement";
 import type {
-  GetAllUsersResponse,
   GetCurrentUserResponse,
   LoginRequest,
   LoginResponse,

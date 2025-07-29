@@ -104,9 +104,9 @@ const UserManagement = ({ users, fetch }: UserManagementProps) => {
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.employeeId?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment =
       departmentFilter === "all" || user.department === departmentFilter;
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
