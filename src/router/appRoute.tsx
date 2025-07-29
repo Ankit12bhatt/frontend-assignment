@@ -88,9 +88,9 @@ const AppRoute = () => {
     }
 
     // Authenticated and trying to access wrong section
-    if (userRole === UserRole.ADMIN && path.startsWith("/employee")) {
+    if (userRole === UserRole.ADMIN && path.startsWith("/admin")) {
       navigate("/admin/dashboard");
-    } else if (userRole === UserRole.EMPLOYEE && path.startsWith("/admin")) {
+    } else if (userRole === UserRole.EMPLOYEE && path.startsWith("/employee")) {
       navigate("/employee/dashboard");
     }
 
