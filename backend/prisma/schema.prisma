@@ -97,7 +97,7 @@ enum AttendanceStatus {
 
 enum LeaveTypeCategory {
   regular
-  event
+  special
 }
 
 enum LeaveStatus {

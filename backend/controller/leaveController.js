@@ -173,3 +173,22 @@ export const createLeaveType = async (req, res) => {
       },
     });
 };
+
+// admin only feature 
+export const deletLeaveType = async (req, res) => {
+  const {leaveId}  = req.params;
+  if (!leaveId) {
+    return res
+      .status(HttpStatus.BAD_REQUEST)
+      .json(errorResponse("Leave type ID is required"));
+  }
+
+  await prisma.leaveType.delete({
+    where: { id: Number(leaveId) },
+  });
+
+  return res.status(HttpStatus.OK).json({
+    success: true,
+    message: "Leave type deleted successfully",
+  });
+}
