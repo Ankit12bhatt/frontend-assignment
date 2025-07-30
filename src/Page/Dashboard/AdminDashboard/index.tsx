@@ -29,53 +29,20 @@ import LeaveManagement from "./LeaveManagement";
 import UserManagement from "./UserManagement";
 import EmployeeDashboard from "../EmployeeDashboard";
 import { useGetAllUsersQuery } from "@/store/api/userSlice";
+import { useDeleteLeaveTypeMutation, useGetLeavesQuery } from "@/store/api/leaveSlice";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const { data: users = [], refetch } = useGetAllUsersQuery();
-
-
-  const [leaveTypes, setLeaveTypes] = React.useState<LeaveType[]>([
-    {
-      id: "1",
-      name: "Annual Leave",
-      maxDays: 21,
-      color: "#3b82f6",
-      isSpecial: false,
-      description: "Regular annual vacation days",
-    },
-    {
-      id: "2",
-      name: "Sick Leave",
-      maxDays: 10,
-      color: "#ef4444",
-      isSpecial: false,
-      description: "Medical leave for illness",
-    },
-    {
-      id: "3",
-      name: "Diwali Festival",
-      maxDays: 3,
-      color: "#f59e0b",
-      isSpecial: true,
-      description: "Special leave for Diwali celebration",
-    },
-    {
-      id: "4",
-      name: "Christmas",
-      maxDays: 2,
-      color: "#10b981",
-      isSpecial: true,
-      description: "Christmas holiday leave",
-    },
-  ]);
-
-  const [leaveRequests, setLeaveRequests] = React.useState<LeaveRequest[]>([
+  const { data: LeaveTypesData, refetch: leaveTypesRefetch } = useGetLeavesQuery();
+  const [ deleteLeaveTypeData] = useDeleteLeaveTypeMutation();
+  console.log("LeaveTypesData", LeaveTypesData);
+    const [leaveTypes, setLeaveTypes] = React.useState<LeaveType[]>();  const [leaveRequests, setLeaveRequests] = React.useState<LeaveRequest[]>([
     {
       id: "1",
       userId: "1",
       userName: "John Doe",
-      leaveType: leaveTypes[0],
       startDate: "2024-02-15",
       endDate: "2024-02-20",
       totalDays: 6,
@@ -88,7 +55,6 @@ const AdminDashboard = () => {
       id: "2",
       userId: "2",
       userName: "Jane Smith",
-      leaveType: leaveTypes[1],
       startDate: "2024-01-28",
       endDate: "2024-01-30",
       totalDays: 3,
@@ -101,7 +67,6 @@ const AdminDashboard = () => {
       id: "3",
       userId: "3",
       userName: "Mike Johnson",
-      leaveType: leaveTypes[2],
       startDate: "2024-03-10",
       endDate: "2024-03-12",
       totalDays: 3,
@@ -113,6 +78,38 @@ const AdminDashboard = () => {
       adminComments: "Approved for festival celebration",
     },
   ]);
+
+  React.useEffect(() => {
+    const data = convertToLeaveType(LeaveTypesData?.data || []);
+  setLeaveTypes(data);
+    console.log("data", data);
+    if (data.length === 0) return;
+
+  const updatedRequests = leaveRequests.map((request) => {
+    const randomLeaveType = data[Math.floor(Math.random() * data.length)];
+    return {
+      ...request,
+      leaveType: randomLeaveType,
+    };
+  });
+
+  setLeaveRequests(updatedRequests);
+  }, [LeaveTypesData]);
+
+
+
+
+
+  const convertToLeaveType = (data: any) => {
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      maxDays: item.max_days,
+      color: item.color,
+      isSpecial: item.type == "special" ? true : false,
+      description: item.description || "No description available",
+    }));
+  };
 
   const pendingRequests = leaveRequests.filter(
     (req) => req.status === "pending"
@@ -160,14 +157,24 @@ const AdminDashboard = () => {
     );
   };
 
-  const handleUpdateLeaveType = (id: string, updates: Partial<LeaveType>) => {
+  const handleUpdateLeaveType = (id: number, updates: Partial<LeaveType>) => {
     setLeaveTypes((prev) =>
-      prev.map((type) => (type.id === id ? { ...type, ...updates } : type))
+      prev?.map((type) => (type.id === id ? { ...type, ...updates } : type))
     );
   };
 
-  const handleDeleteLeaveType = (id: string) => {
-    setLeaveTypes((prev) => prev.filter((type) => type.id !== id));
+  const handleDeleteLeaveType = async (id: number) => {
+    try {
+      const response = await deleteLeaveTypeData(id).unwrap();
+      if (!response.success) {
+        throw new Error(response.message || "Failed to delete leave type");
+      }
+      toast.success("Leave type deleted successfully");
+      setLeaveTypes((prev) => prev?.filter((type) => type.id !== id));
+      leaveTypesRefetch();
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while deleting leave type");
+    }
   };
 
   const handleLogut = () => {
@@ -190,7 +197,7 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Avatar onClick={()=> handleLogut()}>
+            <Avatar onClick={() => handleLogut()}>
               <AvatarImage src="/placeholder.svg?height=40&width=40" />
               <AvatarFallback>
                 {currentUser.name
@@ -237,11 +244,11 @@ const AdminDashboard = () => {
           />
           <StatsCard
             title="Leave Types"
-            value={leaveTypes.length}
+            value={leaveTypes?.length || 0}
             icon={Settings}
             iconColor="text-purple-600"
             subtitle={`${
-              leaveTypes.filter((t) => t.isSpecial).length
+              leaveTypes?.filter((t) => t.isSpecial).length
             } special types`}
           />
         </div>
@@ -289,7 +296,7 @@ const AdminDashboard = () => {
                             {request.userName}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {request.leaveType.name} • {request.totalDays} days
+                            {request.leaveType?.name} • {request.totalDays} days
                           </p>
                         </div>
                       </div>
@@ -366,10 +373,10 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {leaveTypes.map((type) => {
+                    {leaveTypes?.map((type) => {
                       const usage = leaveRequests.filter(
                         (req) =>
-                          req.leaveType.id === type.id &&
+                          req.leaveType?.id === type.id &&
                           req.status === "approved"
                       ).length;
                       return (
@@ -410,7 +417,7 @@ const AdminDashboard = () => {
                   ? (users as User[])
                   : []
               }
-              fetch = {refetch}
+              fetch={refetch}
             />
           </TabsContent>
 
@@ -422,6 +429,7 @@ const AdminDashboard = () => {
               onRejectRequest={handleRejectRequest}
               onUpdateLeaveType={handleUpdateLeaveType}
               onDeleteLeaveType={handleDeleteLeaveType}
+              leaveFetch = {leaveTypesRefetch}
             />
           </TabsContent>
 
@@ -441,7 +449,7 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="records">
-            <EmployeeDashboard  />
+            <EmployeeDashboard />
           </TabsContent>
         </Tabs>
       </div>

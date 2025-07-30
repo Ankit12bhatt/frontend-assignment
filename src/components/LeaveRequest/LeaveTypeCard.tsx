@@ -6,7 +6,7 @@ import type { LeaveType } from "@/defination/leave";
 interface LeaveTypeCardProps {
   leaveType: LeaveType;
   onEdit: (leaveType: LeaveType) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
 }
 
  const LeaveTypeCard = ({ leaveType, onEdit, onDelete }: LeaveTypeCardProps) => {

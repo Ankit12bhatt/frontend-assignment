@@ -1,5 +1,5 @@
 export interface LeaveType {
-  id: string;
+  id: number;
   name: string;
   maxDays: number;
   color: string;
@@ -11,7 +11,7 @@ export interface LeaveRequest {
   id: string;
   userId: string;
   userName: string;
-  leaveType: LeaveType;
+  leaveType?: LeaveType;
   startDate: string;
   endDate: string;
   totalDays: number;

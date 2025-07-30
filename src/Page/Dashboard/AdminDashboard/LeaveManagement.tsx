@@ -11,11 +11,12 @@ import ApprovalDialog from "@/components/LeaveRequest/ApprovalDialog";
 
 interface LeaveManagementProps {
   leaveRequests: LeaveRequest[];
-  leaveTypes: LeaveType[];
+  leaveTypes?: LeaveType[];
   onApproveRequest: (id: string, adminComments?: string) => void;
   onRejectRequest: (id: string, adminComments: string) => void;
-  onUpdateLeaveType: (id: string, leaveType: Partial<LeaveType>) => void;
-  onDeleteLeaveType: (id: string) => void;
+  onUpdateLeaveType: (id: number, leaveType: Partial<LeaveType>) => void;
+  onDeleteLeaveType: (id: number) => void;
+  leaveFetch: () => void; 
 }
 
 const LeaveManagement = ({
@@ -25,6 +26,7 @@ const LeaveManagement = ({
   onRejectRequest,
   onUpdateLeaveType,
   onDeleteLeaveType,
+  leaveFetch,
 }: LeaveManagementProps) => {
   // Approval dialog state
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
@@ -97,6 +99,7 @@ const LeaveManagement = ({
             onCreateLeaveType={handleCreateLeaveType}
             onUpdateLeaveType={onUpdateLeaveType}
             onDeleteLeaveType={onDeleteLeaveType}
+            leaveFetch={leaveFetch} // Pass the leaveFetch function to refetch leave types
           />
         </TabsContent>
       </Tabs>

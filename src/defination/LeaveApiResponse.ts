@@ -33,3 +33,10 @@ export interface CreateLeaveTypeResponse {
     leaveTypeId: number
   }
 }
+
+
+export interface DeleteLeaveResponse {
+  success?: boolean
+  message: string
+  status: boolean
+}

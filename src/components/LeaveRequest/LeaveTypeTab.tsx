@@ -22,10 +22,11 @@ import LeaveTypeForm from "./LeaveTypeForm";
 import LeaveTypeCard from "./LeaveTypeCard";
 
 interface LeaveTypesTabProps {
-  leaveTypes: LeaveType[];
+  leaveTypes?: LeaveType[];
   onCreateLeaveType: (data: any) => Promise<void>;
-  onUpdateLeaveType: (id: string, data: any) => void;
-  onDeleteLeaveType: (id: string) => void;
+  onUpdateLeaveType: (id: number, data: any) => void;
+  onDeleteLeaveType: (id: number) => void;
+  leaveFetch: () => void; 
 }
 
 export const LeaveTypesTab = ({
@@ -33,6 +34,7 @@ export const LeaveTypesTab = ({
   onCreateLeaveType,
   onUpdateLeaveType,
   onDeleteLeaveType,
+  leaveFetch,
 }: LeaveTypesTabProps) => {
   const [isLeaveTypeDialogOpen, setIsLeaveTypeDialogOpen] = useState(false);
   const [editingLeaveType, setEditingLeaveType] = useState<LeaveType | null>(null);
@@ -66,6 +68,7 @@ export const LeaveTypesTab = ({
     } else {
       await onCreateLeaveType(mappedData);
     }
+     leaveFetch();
 
     handleDialogClose();
   };
@@ -107,13 +110,13 @@ export const LeaveTypesTab = ({
         </Dialog>
       </CardHeader>
       <CardContent>
-        {leaveTypes.length === 0 ? (
+        {leaveTypes?.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             No leave types configured
           </p>
         ) : (
           <div className="space-y-3">
-            {leaveTypes.map((type) => (
+            {leaveTypes?.map((type) => (
               <LeaveTypeCard
                 key={type.id}
                 leaveType={type}
