@@ -18,23 +18,26 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import type { LeaveRequest, LeaveType } from "@/defination/leave"
+import type {  LeaveType } from "@/defination/leave"
+import { useSubmitleaveRequestMutation } from "@/store/api/leaveSlice"
+import { toast } from "sonner"
 
 interface LeaveRequestFormProps {
-  leaveTypes: LeaveType[]
-  onSubmitRequest: (request: Omit<LeaveRequest, "id" | "userId" | "userName" | "appliedDate" | "status">) => void
+  leaveTypes?: LeaveType[]
+  appliedLeaveRefetch: () => void
 }
 
 type FormValues = {
-  leaveType: string
+  leaveType?:  string
   startDate: string
   endDate: string
   reason: string
   comments?: string
 }
 
-export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveRequestFormProps) {
+export default function LeaveRequestForm({ leaveTypes, appliedLeaveRefetch }: LeaveRequestFormProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [submitLeave] = useSubmitleaveRequestMutation();
 
   const {
     register,
@@ -57,7 +60,7 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
   const watchStartDate = watch("startDate")
   const watchEndDate = watch("endDate")
 
-  const selectedType = leaveTypes.find((type) => type.id === watchLeaveType)
+  const selectedType = leaveTypes?.find((type) => type.id.toString() === watchLeaveType)
 
   const totalDays =
     watchStartDate && watchEndDate
@@ -72,18 +75,31 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
     return true
   }
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     if (!selectedType) return
+    try {
+      const resposne = await submitLeave({
+        leave_type_id: Number(selectedType.id),
+        start_date: data.startDate,
+        end_date: data.endDate,
+        total_days: totalDays,
+        reason: data.reason,
+        status: "pending",
+        applied_date: format(new Date(), "yyyy-MM-dd"),
+        comments: data.comments || "",
+      }).unwrap();
+      if (!resposne.status) {
+        throw new Error(resposne.message || "Failed to submit leave request");
+      }
+        toast.success(resposne.message || "Failed to submit leave request")
+        appliedLeaveRefetch();
 
-    onSubmitRequest({
-      leaveType: selectedType,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      totalDays,
-      reason: data.reason,
-      comments: data.comments || "",
-    })
+    } catch (error: any ) {
+      console.log("error",error);
+      toast.error(error.data.message || "Failed to submit leave request")
+    }
 
+    appliedLeaveRefetch();
     reset()
     setIsOpen(false)
   }
@@ -106,13 +122,13 @@ export default function LeaveRequestForm({ leaveTypes, onSubmitRequest }: LeaveR
           {/* Leave Type */}
           <div>
             <Label htmlFor="leave-type">Leave Type</Label>
-            <Select value={watchLeaveType} onValueChange={(value) => setValue("leaveType", value, { shouldValidate: true })}>
+            <Select value={watchLeaveType} onValueChange={(value) => setValue("leaveType", value.toString(), { shouldValidate: true })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
               <SelectContent>
-                {leaveTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
+                {leaveTypes?.filter((type)=> type.isActive).map((type) => (
+                  <SelectItem key={type.id} value={type.id.toString()}>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: type.color }} />
                       <span>{type.name}</span>

@@ -78,7 +78,7 @@ interface LeaveRequestsTabProps {
                     <div>
                       <p className="font-medium">{request.userName}</p>
                       <p className="text-sm text-gray-600">
-                        {request.leaveType.name} • {request.totalDays} days
+                        {request.leaveType?.name} • {request.totalDays} days
                       </p>
                     </div>
                   </div>

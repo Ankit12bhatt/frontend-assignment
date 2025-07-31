@@ -15,7 +15,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   AttendanceStats,
-  LeaveRequest,
   LeaveType,
 } from "@/defination/leave";
 import { AttendanceCard } from "@/components/attendance/TodayAttendanceCard";
@@ -23,6 +22,9 @@ import RecentAttendance from "@/components/attendance/RecentAttendance";
 import { LeaveManagementSection } from "@/components/leaveDetails/LeaveRequestManagement";
 import AttendanceStatistics from "@/components/stats/attendanceStats";
 import { useEffect, useMemo, useState } from "react";
+import { useGetAppliedLeavesQuery, useGetLeavesQuery } from "@/store/api/leaveSlice";
+import { convertToLeaveType } from "@/helper/convertLeave";
+import type { LeaveRequestResponse } from "@/defination/LeaveApiResponse";
 
 interface AttendanceRecord {
   date: string;
@@ -38,64 +40,18 @@ interface AttendanceRecord {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [checkOutTime, setCheckOutTime] = useState<string | null>(null);
-  const [leaveTypes] = useState<LeaveType[]>([
-    {
-      id: "1",
-      name: "Annual Leave",
-      maxDays: 21,
-      color: "#3b82f6",
-      isSpecial: false,
-      description: "Regular annual vacation days",
-    },
-    {
-      id: "2",
-      name: "Sick Leave",
-      maxDays: 10,
-      color: "#ef4444",
-      isSpecial: false,
-      description: "Medical leave for illness",
-    },
-    {
-      id: "3",
-      name: "Diwali Festival",
-      maxDays: 3,
-      color: "#f59e0b",
-      isSpecial: true,
-      description: "Special leave for Diwali celebration",
-    },
-  ]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequestResponse[]>();
+  const {data: leaveTypesData} = useGetLeavesQuery();
+  const {data: appliedLeave, refetch: appliedLeaveRefetch } = useGetAppliedLeavesQuery();
+  useEffect(()=> {
+    setLeaveRequests(appliedLeave?.data || []);
+  },[appliedLeave])
+  useEffect(() => {
+    const data = convertToLeaveType(leaveTypesData?.data || []);
+    setLeaveTypes(data);
+  }, [leaveTypesData]);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>();
 
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([
-    {
-      id: "1",
-      userId: currentUser.id,
-      userName: currentUser.name,
-      leaveType: leaveTypes[0],
-      startDate: "2024-02-15",
-      endDate: "2024-02-20",
-      totalDays: 6,
-      reason: "Family vacation",
-      status: "approved",
-      appliedDate: "2024-01-20",
-      approvedBy: "admin1",
-      approvedDate: "2024-01-22",
-      comments: "Planning a trip with family",
-      adminComments: "Approved. Enjoy your vacation!",
-    },
-    {
-      id: "2",
-      userId: currentUser.id,
-      userName: currentUser.name,
-      leaveType: leaveTypes[1],
-      startDate: "2024-01-28",
-      endDate: "2024-01-30",
-      totalDays: 3,
-      reason: "Flu symptoms",
-      status: "pending",
-      appliedDate: "2024-01-25",
-      comments: "Feeling unwell, need rest",
-    },
-  ]);
 
   const [attendanceHistory] = useState<
     AttendanceRecord[]
@@ -194,28 +150,13 @@ interface AttendanceRecord {
     setIsCheckedIn(false);
   };
 
-  const handleSubmitRequest = (
-    requestData: Omit<
-      LeaveRequest,
-      "id" | "userId" | "userName" | "appliedDate" | "status"
-    >
-  ) => {
-    const newRequest: LeaveRequest = {
-      ...requestData,
-      id: Date.now().toString(),
-      userId: currentUser.id,
-      userName: currentUser.name,
-      appliedDate: format(new Date(), "yyyy-MM-dd"),
-      status: "pending",
-    };
-    setLeaveRequests((prev) => [newRequest, ...prev]);
-  };
 
   const getTotalHours = (checkIn?: string, checkOut?: string): string => {
     if (!checkIn || !checkOut) return "";
+    console.log("checkIn", checkIn, "checkOut", checkOut);
 
-    const [inHour, inMin] = checkIn.split(":").map(Number);
-    const [outHour, outMin] = checkOut.split(":").map(Number);
+    const [inHour, inMin] = checkIn?.split(":").map(Number);
+    const [outHour, outMin] = checkOut?.split(":").map(Number);
 
     const inMinutes = inHour * 60 + inMin;
     const outMinutes = outHour * 60 + outMin;
@@ -305,7 +246,7 @@ interface AttendanceRecord {
             <LeaveManagementSection
               leaveTypes={leaveTypes}
               leaveRequests={leaveRequests}
-              handleSubmitRequest={handleSubmitRequest}
+              appliedLeaveRefetch={appliedLeaveRefetch}
             />
           </TabsContent>
 

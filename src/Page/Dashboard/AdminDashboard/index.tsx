@@ -31,6 +31,7 @@ import EmployeeDashboard from "../EmployeeDashboard";
 import { useGetAllUsersQuery } from "@/store/api/userSlice";
 import { useDeleteLeaveTypeMutation, useGetLeavesQuery } from "@/store/api/leaveSlice";
 import { toast } from "sonner";
+import { convertToLeaveType } from "@/helper/convertLeave";
 
 const AdminDashboard = () => {
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -96,20 +97,6 @@ const AdminDashboard = () => {
   setLeaveRequests(updatedRequests);
   }, [LeaveTypesData]);
 
-
-
-
-
-  const convertToLeaveType = (data: any) => {
-    return data.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      maxDays: item.max_days,
-      color: item.color,
-      isSpecial: item.type == "special" ? true : false,
-      description: item.description || "No description available",
-    }));
-  };
 
   const pendingRequests = leaveRequests.filter(
     (req) => req.status === "pending"
@@ -447,7 +434,6 @@ const AdminDashboard = () => {
               }
             />
           </TabsContent>
-
           <TabsContent value="records">
             <EmployeeDashboard />
           </TabsContent>

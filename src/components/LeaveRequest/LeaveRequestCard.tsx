@@ -27,14 +27,14 @@ export const LeaveRequestCard = ({
           <div>
             <p className="font-medium">{request.userName}</p>
             <p className="text-sm text-gray-600">
-              {request.leaveType.name}
+              {request.leaveType?.name}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div
             className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: request.leaveType.color }}
+            style={{ backgroundColor: request.leaveType?.color }}
           />
           {getStatusBadge(request.status)}
         </div>

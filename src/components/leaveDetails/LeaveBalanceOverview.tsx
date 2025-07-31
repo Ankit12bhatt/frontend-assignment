@@ -9,22 +9,21 @@ type LeaveType = {
 };
 
 type LeaveRequest = {
-  leaveType: LeaveType;
+  leaveType?: LeaveType;
   status: string;
   totalDays: number;
 };
 
 type LeaveBalanceOverviewProps = {
-  leaveTypes: LeaveType[];
-  leaveRequests: LeaveRequest[];
+  leaveTypes?: LeaveType[];
+  leaveRequests?: LeaveRequest[];
 };
 
 const LeaveBalanceOverview = ({ leaveTypes, leaveRequests }: LeaveBalanceOverviewProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {leaveTypes.map((type) => {
-        const usedDays = leaveRequests
-          .filter(req => req.leaveType.id === type.id && req.status === "approved")
+      {leaveTypes?.map((type) => {
+        const usedDays = leaveRequests?.filter(req => req.leaveType?.id === type.id && req.status === "approved")
           .reduce((sum, req) => sum + req.totalDays, 0);
 
         return (

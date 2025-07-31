@@ -9,7 +9,7 @@ import { CalendarDays } from "lucide-react";
 import LeaveRequestData from "./LeaveRequestData";
 
 type LeaveRequestListProps = {
-  leaveRequests: any[];
+  leaveRequests?: any[];
 };
 
 export const LeaveRequestList = ({ leaveRequests }: LeaveRequestListProps) => {
@@ -25,14 +25,14 @@ export const LeaveRequestList = ({ leaveRequests }: LeaveRequestListProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {leaveRequests.length === 0 ? (
+        {leaveRequests?.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             No leave requests found
           </p>
         ) : (
           <div className="space-y-4">
-            {leaveRequests.map((request) => (
-              <LeaveRequestData key={request.id} request={request} />
+            {leaveRequests?.map((request) => (
+              <LeaveRequestData key={request.id} request={request}  />
             ))}
           </div>
         )}

@@ -5,6 +5,7 @@ export interface LeaveType {
   color: string;
   isSpecial: boolean; // For festivals/events
   description?: string;
+  isActive?: boolean; 
 }
 
 export interface LeaveRequest {

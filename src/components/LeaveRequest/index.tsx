@@ -25,13 +25,13 @@ interface LeaveRequestCardProps {
           <User className="w-4 h-4 text-gray-500" />
           <div>
             <p className="font-medium">{request.userName}</p>
-            <p className="text-sm text-gray-600">{request.leaveType.name}</p>
+            <p className="text-sm text-gray-600">{request.leaveType?.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div
             className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: request.leaveType.color }}
+            style={{ backgroundColor: request.leaveType?.color }}
           />
           {getStatusBadge(request.status)}
         </div>

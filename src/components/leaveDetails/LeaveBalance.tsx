@@ -3,12 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 type LeaveBalanceCardProps = {
   name: string;
   color: string;
-  usedDays: number;
+  usedDays?: number;
   maxDays: number;
 };
 
  const LeaveBalance = ({ name, color, usedDays, maxDays }: LeaveBalanceCardProps) => {
-  const percentage = Math.min((usedDays / maxDays) * 100, 100);
+  const percentage = Math.min((usedDays ?? 0 / maxDays) * 100, 100);
 
   return (
     <Card>

@@ -3,6 +3,8 @@ import type {
   CreateLeaveTypeResponse,
   DeleteLeaveResponse,
   LeaveTypesResponse,
+  LeaveRequest,
+  LeaveRequestResponseType
 } from "@/defination/LeaveApiResponse";
 import { apiSlice } from "./apiSlice";
 
@@ -30,11 +32,26 @@ export const authApiSlice = apiSlice.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    submitleaveRequest: builder.mutation<any, LeaveRequest>({
+      query: (data) => ({
+        url: "/api/v1/leave/request",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    getAppliedLeaves: builder.query<LeaveRequestResponseType, void>({
+      query: () => ({
+        url: "/api/v1/leave/myLeave",
+        method: "GET",
+      }),
+    })
   }),
 });
 
 export const {
   useCreateLeaveTypeMutation,
   useGetLeavesQuery,
-  useDeleteLeaveTypeMutation
+  useDeleteLeaveTypeMutation,
+  useSubmitleaveRequestMutation,
+  useGetAppliedLeavesQuery
 } = authApiSlice;
