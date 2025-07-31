@@ -11,13 +11,13 @@ export const submitLeaveRequest = async (req, res) => {
     const { leave_type_id, start_date, end_date, reason, comments } = req.body;
 
     if (!leave_type_id || !start_date || !end_date || !reason) {
-      return errorResponse(res, HttpStatus.BAD_REQUEST, "Leave type, dates, and reason are required");
+      return res.status(HttpStatus.BAD_REQUEST).json(errorResponse( "Leave type, dates, and reason are required",HttpStatus.BAD_REQUEST));
     }
 
     const totalDays = differenceInDays(new Date(end_date), new Date(start_date)) + 1;
 
     if (totalDays <= 0) {
-      return errorResponse(res, HttpStatus.BAD_REQUEST, "End date must be after start date");
+      return res.status(HttpStatus.BAD_REQUEST).json(errorResponse( "End date must be after start date", HttpStatus.BAD_REQUEST));
     }
 
     const leaveType = await prisma.leaveType.findFirst({
@@ -25,11 +25,11 @@ export const submitLeaveRequest = async (req, res) => {
     });
 
     if (!leaveType) {
-      return errorResponse(res, HttpStatus.BAD_REQUEST, "Invalid leave type");
+      return res.status(HttpStatus.BAD_REQUEST).json(errorResponse( "Invalid leave type", HttpStatus.BAD_REQUEST));
     }
 
     if (totalDays > leaveType.max_days) {
-      return errorResponse(res, HttpStatus.BAD_REQUEST, `Cannot request more than ${leaveType.max_days} days for this leave type`);
+      return res.status(HttpStatus.BAD_REQUEST).json(errorResponse( `Cannot request more than ${leaveType.max_days} days for this leave type`, HttpStatus.BAD_REQUEST ));
     }
 
     const overlapping = await prisma.leaveRequest.findMany({
@@ -54,7 +54,7 @@ export const submitLeaveRequest = async (req, res) => {
     });
 
     if (overlapping.length > 0) {
-      return errorResponse(res, HttpStatus.BAD_REQUEST, "You have overlapping leave requests");
+      return res.status(HttpStatus.BAD_REQUEST).json(errorResponse( "You have overlapping leave requests", HttpStatus.BAD_REQUEST ));
     }
 
     const request = await prisma.leaveRequest.create({
@@ -69,8 +69,32 @@ export const submitLeaveRequest = async (req, res) => {
       },
     });
 
-    return successResponse(res, HttpStatus.CREATED, "Leave request submitted successfully", { requestId: request.id });
+    res
+    .status(HttpStatus.CREATED)
+    .json(successResponse(HttpStatus.CREATED, "Leave request submitted successfully", { requestId: request.id }));
 };
+
+export const getAppliedLeaves = async (req, res) => {
+  const userId = req.user.id;
+  if(!userId) {
+    return res.status(HttpStatus.BAD_REQUEST).json(errorResponse(  HttpStatus.BAD_REQUEST, "User ID is required", ));
+  }
+  const appliedLeave = await prisma.leaveRequest.findMany({
+    where: { user_id: userId },
+    include: {
+      leave_type: true
+    },
+    orderBy: {
+      created_at: 'desc'
+    }
+  })
+
+  if(!appliedLeave) {
+    return res.status(HttpStatus.NOT_FOUND).json(errorResponse( "No leave request found", HttpStatus.NOT_FOUND));
+  }
+  return res.status(HttpStatus.OK).json(successResponse(appliedLeave, "Leave request fetched successfully"));
+
+}
 
 
 export const updateLeaveRequestStatus = async (req, res) => {
